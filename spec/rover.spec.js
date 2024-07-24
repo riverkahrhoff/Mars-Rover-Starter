@@ -44,13 +44,51 @@ test("response returned by receiveMessage includes two results if two commands a
     let message = new Message('Test message with two commands', commands);
     let rover = new Rover(98382);  
     let response = rover.receiveMessage(message);
-    expect(response.results).toMatchObject([ { mode: 'NORMAL', generatorWatts: 110, position: 98382 } ])
+    expect(response.results).toMatchObject([ {
+      completed: true,
+      roverStatus: { 
+         mode: "NORMAL",
+         generatorWatts: 110,
+         position: 98382,
+      }
+   } ])
   });
 
   // TEST 11
+  test("responds correctly to the mode change command", function() {
+    let commands = [];
+    let message = new Message('Test message with two commands', commands);
+    let rover = new Rover(98382);  
+    let response = rover.receiveMessage(message);
+    if (commands == [new Command("MODE_CHANGE", "NORMAL")]) {
+      expect(response.results).toMatchObject({
+        message: 'Test message with two commands',
+        results: [ { completed: true }, { completed: true, roverStatus: [Object] } ]
+      })
+    } else if (commands == [new Command("MODE_CHANGE", "LOW_POWER")]) {
+      expect(response.results).toMatchObject([{
+        message: 'Test message with two commands',
+        results: [ { completed: true }, { completed: true, roverStatus: [Object] } ]
+      }])
+    }
+  });
 
   // TEST 12
+  test("responds with a false completed value when attempting to move in LOW_POWER mode", function() {
+    let commands = [new Command("MODE_CHANGE", "LOW_POWER"), new Command('MOVE', 100)];
+    let message = new Message('Test message with two commands', commands);
+    let rover = new Rover(98382);  
+    let response = rover.receiveMessage(message);
+   expect(response.results[1]).toMatchObject({ completed: false })
+  })
 
   // TEST 13
+test("responds with the position for the move command", function() {
+  let commands = [new Command('MOVE', 100), new Command("STATUS_CHECK")];
+    let message = new Message('Test message with two commands', commands);
+    let rover = new Rover(98382);  
+    let response = rover.receiveMessage(message);
+    expect(response.results[1].roverStatus.position).toEqual(100)
+})
 
 });
